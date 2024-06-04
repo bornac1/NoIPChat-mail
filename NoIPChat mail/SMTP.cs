@@ -62,7 +62,7 @@ namespace NoIPChat_mail
                 List<string?> recipients = [];
                 var data = new StringBuilder();
                 string? line;
-                while ((line = await reader.ReadLineAsync()) != null)
+                while ((line = await reader.ReadLineAsync()) != null && active)
                 {
                     if (line.StartsWith("HELO", StringComparison.OrdinalIgnoreCase))
                     {
