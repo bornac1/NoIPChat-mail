@@ -109,12 +109,16 @@ namespace NoIPChat_mail
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                WriteLog(ex);
             }
             finally
             {
                 client.Close();
             }
+        }
+        public void WriteLog(Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
         }
     }
 }
