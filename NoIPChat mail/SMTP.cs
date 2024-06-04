@@ -1,40 +1,28 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Messages;
 using MimeKit;
 using Server_base;
-using Messages;
 
 namespace NoIPChat_mail
 {
-    public class SMTPServer : IPlugin
+    internal class SMTPServer
     {
-        public Server? Server { get; set; }
-        private int Port;
-        private string Name;
+        private Mail mail;
         private bool active = true;
-        private List<Task> tasks = [];
-        public void Initialize()
+        private ConcurrentList<Task> tasks = [];
+        public SMTPServer(Mail mail, List<(IPAddress, int)> interfaces)
         {
-            if (Server != null)
+            this.mail = mail;
+            foreach (var iface in interfaces)
             {
-                Name = Server.name;
-                Port = 25;
-                _ = StartAsync();
+                _ = StartAsync(iface.Item1, iface.Item2);
             }
         }
-        public SMTPServer()
+        public async Task StartAsync(IPAddress IP, int Port)
         {
-            Name = string.Empty;
-        }
-        public SMTPServer(string name, int port = 25)
-        {
-            Name = name;
-            Port = port;
-        }
-        public async Task StartAsync()
-        {
-            var listener = new TcpListener(IPAddress.Any, Port);
+            var listener = new TcpListener(IP, Port);
             listener.Start();
             while (active)
             {
@@ -46,7 +34,7 @@ namespace NoIPChat_mail
                 }
                 catch (Exception ex)
                 {
-                    WriteLog(ex);
+                    mail.WriteLog(ex);
                 }
             }
         }
@@ -57,7 +45,7 @@ namespace NoIPChat_mail
                 using var stream = client.GetStream();
                 using var reader = new StreamReader(stream, Encoding.ASCII);
                 using var writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
-                await writer.WriteLineAsync($"220 {Name}");
+                await writer.WriteLineAsync($"220 {mail.Name}");
                 string? sender = null;
                 List<string?> recipients = [];
                 var data = new StringBuilder();
@@ -88,20 +76,14 @@ namespace NoIPChat_mail
                         }
                         await writer.WriteLineAsync("250 OK");
                         var message = MimeMessage.Load(new MemoryStream(Encoding.ASCII.GetBytes(data.ToString())));
-                            foreach (string? receiver in recipients)
+                        foreach (string? receiver in recipients)
+                        {
+                            if (receiver != null)
                             {
-                                if (Server != null && receiver != null)
-                                {
-                                    if (MemoryExtensions.Equals(StringProcessing.GetServer(receiver), Name, StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        await Server.SendMessageThisServer(receiver, new Message() { Sender = sender, Receiver = receiver, Msg = Encoding.UTF8.GetBytes(message.TextBody) });
-                                    }
-                                    else
-                                    {
-                                        await Server.SendMessageOtherServer(receiver, new Message() { Sender = sender, Receiver = receiver, Msg = Encoding.UTF8.GetBytes(message.TextBody) });
-                                    }
-                                }
+                                Message msg = new Message() { Sender = sender, Receiver = receiver, Msg = Encoding.UTF8.GetBytes(message.TextBody) };
+                                await mail.SendMessage(receiver, msg);
                             }
+                        }
                     }
                     else if (line.StartsWith("QUIT", StringComparison.OrdinalIgnoreCase))
                     {
@@ -116,21 +98,16 @@ namespace NoIPChat_mail
             }
             catch (Exception ex)
             {
-                WriteLog(ex);
+                mail.WriteLog(ex);
             }
             finally
             {
                 client.Close();
             }
         }
-        public void WriteLog(Exception ex)
+        public async Task Close()
         {
-            //Write to same log as server
-            Server?.WriteLog(ex);
-        }
-        public void Close()
-        {
-            Task.WhenAll(tasks).Wait();
+            await Task.WhenAll(tasks);
             active = false;
         }
     }
