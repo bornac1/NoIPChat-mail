@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Messages;
 using MimeKit;
 using Server_base;
@@ -19,7 +15,8 @@ namespace NoIPChat_mail
     {
         private readonly Server? Server;
         private readonly ConcurrentDictionary<string, DataHandler> server_messages;
-        internal DummyDictionary(Server? server) {
+        internal DummyDictionary(Server? server)
+        {
             Server = server;
             if (Server != null)
             {
@@ -33,7 +30,8 @@ namespace NoIPChat_mail
         private static MimeMessage GetMime(Message message)
         {
             var email = new MimeMessage();
-            if (message.Msg != null) {
+            if (message.Msg != null)
+            {
                 email.From.Add(new MailboxAddress("Sender", message.Sender));
                 email.To.Add(new MailboxAddress("Recipient", message.Receiver));
                 email.Subject = "NoIPChat email gateway";
@@ -53,16 +51,18 @@ namespace NoIPChat_mail
             }
             return list;
         }
-        public List<MimeMessage> this[string key] { 
-            get {
+        public List<MimeMessage> this[string key]
+        {
+            get
+            {
                 return MimeMessageList(key).Result;
             }
-            set => throw new NotImplementedException(); 
+            set => throw new NotImplementedException();
         }
         public ICollection<string> Keys => server_messages.Keys;
         public int Count => server_messages.Count;
         public bool IsReadOnly => true;
-        
+
         public bool ContainsKey(string key)
         {
             return server_messages.ContainsKey(key);

@@ -79,7 +79,7 @@ namespace NoIPChat_mail
                         {
                             if (receiver != null)
                             {
-                                Message msg = new () { Sender = sender, Receiver = receiver, Msg = Encoding.UTF8.GetBytes(message.TextBody) };
+                                Message msg = new() { Sender = sender, Receiver = receiver, Msg = Encoding.UTF8.GetBytes(message.TextBody) };
                                 await mail.SendMessage(receiver, msg);
                             }
                         }

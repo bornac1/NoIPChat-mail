@@ -1,8 +1,6 @@
-﻿using MimeKit;
+﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Net;
-using System.Threading.Tasks;
 using Server_base;
 
 namespace NoIPChat_mail
@@ -40,7 +38,7 @@ namespace NoIPChat_mail
                 }
             }
         }
-        private bool Authenticate (string? user, string? passwordline)
+        private bool Authenticate(string? user, string? passwordline)
         {
             //Placeholder
             if (mail != null && user != null && passwordline != null)
@@ -92,7 +90,7 @@ namespace NoIPChat_mail
                     }
                     else if (authenticated && line.StartsWith("STAT"))
                     {
-                        if (user!= null && mailstore.ContainsKey(user))
+                        if (user != null && mailstore.ContainsKey(user))
                         {
                             var emails = mailstore[user];
                             int totalSize = 0;
@@ -202,4 +200,4 @@ namespace NoIPChat_mail
             await Task.WhenAll(tasks);
         }
     }
-    }
+}
