@@ -1,12 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
+using Messages;
 using MimeKit;
 using Server_base;
-using Messages;
 
 namespace NoIPChat_mail
 {
@@ -88,7 +85,7 @@ namespace NoIPChat_mail
                                 {
                                     if (MemoryExtensions.Equals(StringProcessing.GetServer(receiver), Name, StringComparison.OrdinalIgnoreCase))
                                     {
-                                        await Server.SendMessageThisServer(receiver, new Message() { Sender= sender, Receiver = receiver, Msg = Encoding.UTF8.GetBytes(message.TextBody) });
+                                        await Server.SendMessageThisServer(receiver, new Message() { Sender = sender, Receiver = receiver, Msg = Encoding.UTF8.GetBytes(message.TextBody) });
                                     }
                                     else
                                     {
