@@ -12,8 +12,7 @@ namespace NoIPChat_mail
         private readonly Mail mail;
         private readonly ConcurrentList<Task> tasks = [];
         private readonly DummyDictionary mailstore;
-        internal static readonly string[] separator = ["\r\n", "\r", "\n"];
-
+        private static readonly string[] separator = ["\r\n", "\r", "\n"];
         internal POP3Server(Mail mail, IList<(IPAddress, int)> interfaces)
         {
             this.mail = mail;
