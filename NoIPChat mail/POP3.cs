@@ -11,30 +11,17 @@ namespace NoIPChat_mail
     {
         private readonly Mail mail;
         private readonly ConcurrentList<Task> tasks = [];
-        private readonly Dictionary<string, IList<MimeMessage>> mailstore = new();
+        private readonly DummyDictionary mailstore;
+        internal static readonly string[] separator = ["\r\n", "\r", "\n"];
+
         internal POP3Server(Mail mail, IList<(IPAddress, int)> interfaces)
         {
             this.mail = mail;
+            mailstore = new(mail.Server);
             foreach (var iface in interfaces)
             {
                 _ = StartAsync(iface.Item1, iface.Item2);
             }
-
-            var testEmail = new MimeMessage();
-            testEmail.From.Add(new MailboxAddress("Sender", "sender@example.com"));
-            testEmail.To.Add(new MailboxAddress("Recipient", "test@server1"));
-            testEmail.Subject = "Test Email";
-            testEmail.Body = new TextPart("plain") { Text = "This is a test email." };
-
-            AddEmail("test@server1", testEmail);
-        }
-        private void AddEmail(string recipient, MimeMessage message)
-        {
-            if (!mailstore.ContainsKey(recipient))
-            {
-                mailstore[recipient] = new List<MimeMessage>();
-            }
-            mailstore[recipient].Add(message);
         }
         private async Task StartAsync(IPAddress IP, int Port)
         {
@@ -57,7 +44,11 @@ namespace NoIPChat_mail
         private bool Authenticate (string? user, string? passwordline)
         {
             //Placeholder
-            return true;
+            if (mail != null && user != null && passwordline != null)
+            {
+                return true;
+            }
+            return false;
         }
         private async Task HandleClientAsync(TcpClient client)
         {
@@ -84,7 +75,7 @@ namespace NoIPChat_mail
                     }
                     else if (line.StartsWith("USER"))
                     {
-                        user = line.Substring(5).Trim();
+                        user = line[5..].Trim();
                         await writer.WriteLineAsync("+OK");
                     }
                     else if (line.StartsWith("PASS"))
@@ -146,7 +137,7 @@ namespace NoIPChat_mail
                     }
                     else if (authenticated && line.StartsWith("RETR"))
                     {
-                        if (user != null && int.TryParse(line.Substring(5), out int msgNum) && mailstore.ContainsKey(user) && msgNum <= mailstore[user].Count)
+                        if (user != null && int.TryParse(line.AsSpan(5), out int msgNum) && mailstore.ContainsKey(user) && msgNum <= mailstore[user].Count)
                         {
                             var email = mailstore[user][msgNum - 1];
                             var emailStr = email.ToString();
@@ -171,7 +162,7 @@ namespace NoIPChat_mail
                                 headerStr.AppendLine($"{header.Field}: {header.Value}");
                             }
 
-                            var bodyLines = email.TextBody.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+                            var bodyLines = email.TextBody.Split(separator, StringSplitOptions.None);
                             var bodyStr = string.Join("\r\n", bodyLines.AsSpan(0, Math.Min(nLines, bodyLines.Length)).ToArray());
                             await writer.WriteLineAsync("+OK");
                             await writer.WriteLineAsync(headerStr.ToString());
