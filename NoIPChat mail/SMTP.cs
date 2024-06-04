@@ -9,10 +9,9 @@ namespace NoIPChat_mail
 {
     internal class SMTPServer
     {
-        private Mail mail;
-        private bool active = true;
-        private ConcurrentList<Task> tasks = [];
-        public SMTPServer(Mail mail, List<(IPAddress, int)> interfaces)
+        private readonly Mail mail;
+        private readonly ConcurrentList<Task> tasks = [];
+        internal SMTPServer(Mail mail, IList<(IPAddress, int)> interfaces)
         {
             this.mail = mail;
             foreach (var iface in interfaces)
@@ -20,11 +19,11 @@ namespace NoIPChat_mail
                 _ = StartAsync(iface.Item1, iface.Item2);
             }
         }
-        public async Task StartAsync(IPAddress IP, int Port)
+        private async Task StartAsync(IPAddress IP, int Port)
         {
             var listener = new TcpListener(IP, Port);
             listener.Start();
-            while (active)
+            while (mail.active)
             {
                 try
                 {
@@ -45,12 +44,12 @@ namespace NoIPChat_mail
                 using var stream = client.GetStream();
                 using var reader = new StreamReader(stream, Encoding.ASCII);
                 using var writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
-                await writer.WriteLineAsync($"220 {mail.Name}");
+                await writer.WriteLineAsync($"220 {mail.Server?.name}");
                 string? sender = null;
                 List<string?> recipients = [];
                 var data = new StringBuilder();
                 string? line;
-                while ((line = await reader.ReadLineAsync()) != null && active)
+                while ((line = await reader.ReadLineAsync()) != null && mail.active)
                 {
                     if (line.StartsWith("HELO", StringComparison.OrdinalIgnoreCase))
                     {
@@ -80,7 +79,7 @@ namespace NoIPChat_mail
                         {
                             if (receiver != null)
                             {
-                                Message msg = new Message() { Sender = sender, Receiver = receiver, Msg = Encoding.UTF8.GetBytes(message.TextBody) };
+                                Message msg = new () { Sender = sender, Receiver = receiver, Msg = Encoding.UTF8.GetBytes(message.TextBody) };
                                 await mail.SendMessage(receiver, msg);
                             }
                         }
@@ -105,10 +104,9 @@ namespace NoIPChat_mail
                 client.Close();
             }
         }
-        public async Task Close()
+        internal async Task Close()
         {
             await Task.WhenAll(tasks);
-            active = false;
         }
     }
 }
