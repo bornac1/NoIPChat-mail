@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>NoIPChat_mail</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MimeKit" Version="4.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Messages">
+      <HintPath>..\..\NoIPChat\Server\bin\Debug\net8.0\win-x64\Messages.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Server_base">
+      <HintPath>..\..\NoIPChat\Server\bin\Debug\net8.0\win-x64\Server_base.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
