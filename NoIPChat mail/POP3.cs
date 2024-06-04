@@ -11,7 +11,7 @@ namespace NoIPChat_mail
     {
         private readonly Mail mail;
         private readonly ConcurrentList<Task> tasks = [];
-        private readonly Dictionary<string, List<MimeMessage>> _mailStore = new();
+        private readonly Dictionary<string, IList<MimeMessage>> mailstore = new();
         internal POP3Server(Mail mail, IList<(IPAddress, int)> interfaces)
         {
             this.mail = mail;
@@ -28,16 +28,15 @@ namespace NoIPChat_mail
 
             AddEmail("test@server1", testEmail);
         }
-        public void AddEmail(string recipient, MimeMessage message)
+        private void AddEmail(string recipient, MimeMessage message)
         {
-            if (!_mailStore.ContainsKey(recipient))
+            if (!mailstore.ContainsKey(recipient))
             {
-                _mailStore[recipient] = new List<MimeMessage>();
+                mailstore[recipient] = new List<MimeMessage>();
             }
-            _mailStore[recipient].Add(message);
+            mailstore[recipient].Add(message);
         }
-
-        public async Task StartAsync(IPAddress IP, int Port)
+        private async Task StartAsync(IPAddress IP, int Port)
         {
             var listener = new TcpListener(IP, Port);
             listener.Start();
@@ -103,9 +102,9 @@ namespace NoIPChat_mail
                     }
                     else if (authenticated && line.StartsWith("STAT"))
                     {
-                        if (user!= null && _mailStore.ContainsKey(user))
+                        if (user!= null && mailstore.ContainsKey(user))
                         {
-                            var emails = _mailStore[user];
+                            var emails = mailstore[user];
                             int totalSize = 0;
                             foreach (var email in emails)
                             {
@@ -120,9 +119,9 @@ namespace NoIPChat_mail
                     }
                     else if (authenticated && line.StartsWith("LIST"))
                     {
-                        if (user != null && _mailStore.ContainsKey(user))
+                        if (user != null && mailstore.ContainsKey(user))
                         {
-                            var emails = _mailStore[user];
+                            var emails = mailstore[user];
                             var parts = line.Split(' ');
                             if (parts.Length == 2 && int.TryParse(parts[1], out int msgNum) && msgNum <= emails.Count)
                             {
@@ -147,9 +146,9 @@ namespace NoIPChat_mail
                     }
                     else if (authenticated && line.StartsWith("RETR"))
                     {
-                        if (user != null && int.TryParse(line.Substring(5), out int msgNum) && _mailStore.ContainsKey(user) && msgNum <= _mailStore[user].Count)
+                        if (user != null && int.TryParse(line.Substring(5), out int msgNum) && mailstore.ContainsKey(user) && msgNum <= mailstore[user].Count)
                         {
-                            var email = _mailStore[user][msgNum - 1];
+                            var email = mailstore[user][msgNum - 1];
                             var emailStr = email.ToString();
                             await writer.WriteLineAsync($"+OK {emailStr.Length} octets");
                             await writer.WriteLineAsync(emailStr);
@@ -163,9 +162,9 @@ namespace NoIPChat_mail
                     else if (authenticated && line.StartsWith("TOP"))
                     {
                         var parts = line.Split(' ');
-                        if (parts.Length == 3 && int.TryParse(parts[1], out int msgNum) && int.TryParse(parts[2], out int nLines) && user != null && _mailStore.ContainsKey(user) && msgNum <= _mailStore[user].Count)
+                        if (parts.Length == 3 && int.TryParse(parts[1], out int msgNum) && int.TryParse(parts[2], out int nLines) && user != null && mailstore.ContainsKey(user) && msgNum <= mailstore[user].Count)
                         {
-                            var email = _mailStore[user][msgNum - 1];
+                            var email = mailstore[user][msgNum - 1];
                             var headerStr = new StringBuilder();
                             foreach (var header in email.Headers)
                             {
