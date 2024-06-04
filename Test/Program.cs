@@ -5,8 +5,7 @@ namespace Test
     {
         public static void Main()
         {
-            SMTPServer server = new();
-            server.Initialize();
+            POP3Server server = new();
             Console.ReadLine();
         }
     }

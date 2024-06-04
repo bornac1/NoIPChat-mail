@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using Messages;
 using Server_base;
+using System.Collections.Immutable;
 
 namespace NoIPChat_mail
 {
@@ -9,15 +10,18 @@ namespace NoIPChat_mail
         public Server? Server { get; set; }
         private SMTPServer? SMTP;
         private POP3Server? POP3;
-        List<(IPAddress, int)> interfaces = [];
+        internal bool active = true;
+        private readonly ImmutableList<(IPAddress, int)> SMTPinterfaces = [];
+        private readonly ImmutableList<(IPAddress, int)> POP3interfaces = [];
         public void Initialize()
         {
             if (Server != null)
             {
                 //Just example that listens on all IPs
-                interfaces.Add((IPAddress.Any, 25));
-                SMTP = new SMTPServer(this, interfaces);
-                //TODO: POP3 initialization
+                SMTPinterfaces.Add((IPAddress.Any, 25));
+                POP3interfaces.Add((IPAddress.Any, 110));
+                SMTP = new SMTPServer(this, SMTPinterfaces);
+                POP3 = new POP3Server(this, POP3interfaces);
             }
         }
         public void WriteLog(Exception ex)
@@ -27,8 +31,12 @@ namespace NoIPChat_mail
         }
         public void Close()
         {
-            SMTP?.Close().Wait();
-            //TODO: POP3 close
+            Task? smtp = SMTP?.Close();
+            Task? pop3 = POP3?.Close();
+            if (smtp != null && pop3 != null)
+            {
+                Task.WhenAll(smtp, pop3).Wait();
+            }
         }
         internal async Task SendMessage(string user, Message message)
         {
