@@ -3,10 +3,11 @@ namespace Test
 {
     public class Program()
     {
-        public static async Task Main()
+        public static void Main()
         {
-            SMTPServer server = new("test", 25);
-            await server.StartAsync();
+            SMTPServer server = new();
+            server.Initialize();
+            Console.ReadLine();
         }
     }
 
