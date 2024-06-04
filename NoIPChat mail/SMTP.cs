@@ -12,6 +12,8 @@ namespace NoIPChat_mail
         public Server? Server { get; set; }
         private int Port;
         private string Name;
+        private bool active = true;
+        private List<Task> tasks = [];
         public void Initialize()
         {
             if (Server != null)
@@ -34,13 +36,13 @@ namespace NoIPChat_mail
         {
             var listener = new TcpListener(IPAddress.Any, Port);
             listener.Start();
-            while (true)
+            while (active)
             {
                 try
                 {
                     var client = await listener.AcceptTcpClientAsync();
                     // Start handling the client without waiting for it to complete
-                    _ = Task.Run(() => HandleClientAsync(client));
+                    tasks.Add(Task.Run(() => HandleClientAsync(client)));
                 }
                 catch (Exception ex)
                 {
@@ -125,6 +127,11 @@ namespace NoIPChat_mail
         {
             //Write to same log as server
             Server?.WriteLog(ex);
+        }
+        public void Close()
+        {
+            Task.WhenAll(tasks).Wait();
+            active = false;
         }
     }
 }
