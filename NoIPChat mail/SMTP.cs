@@ -1,9 +1,9 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using Messages;
 using MimeKit;
 using Server_base;
+using Messages;
 
 namespace NoIPChat_mail
 {
@@ -21,6 +21,10 @@ namespace NoIPChat_mail
                 _ = StartAsync();
             }
         }
+        public SMTPServer()
+        {
+            Name = string.Empty;
+        }
         public SMTPServer(string name, int port = 25)
         {
             Name = name;
@@ -30,11 +34,18 @@ namespace NoIPChat_mail
         {
             var listener = new TcpListener(IPAddress.Any, Port);
             listener.Start();
-
             while (true)
             {
-                var client = await listener.AcceptTcpClientAsync();
-                _ = HandleClientAsync(client);
+                try
+                {
+                    var client = await listener.AcceptTcpClientAsync();
+                    // Start handling the client without waiting for it to complete
+                    _ = Task.Run(() => HandleClientAsync(client));
+                }
+                catch (Exception ex)
+                {
+                    WriteLog(ex);
+                }
             }
         }
         private async Task HandleClientAsync(TcpClient client)
@@ -44,11 +55,9 @@ namespace NoIPChat_mail
                 using var stream = client.GetStream();
                 using var reader = new StreamReader(stream, Encoding.ASCII);
                 using var writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
-
                 await writer.WriteLineAsync($"220 {Name}");
-
                 string? sender = null;
-                List<string?> recipients = [null];
+                List<string?> recipients = [];
                 var data = new StringBuilder();
                 string? line;
                 while ((line = await reader.ReadLineAsync()) != null)
@@ -60,6 +69,7 @@ namespace NoIPChat_mail
                     else if (line.StartsWith("MAIL FROM:", StringComparison.OrdinalIgnoreCase))
                     {
                         sender = line[10..].Trim('<', '>');
+                        Console.WriteLine(sender);
                         await writer.WriteLineAsync("250 OK");
                     }
                     else if (line.StartsWith("RCPT TO:", StringComparison.OrdinalIgnoreCase))
@@ -75,13 +85,10 @@ namespace NoIPChat_mail
                             data.AppendLine(line);
                         }
                         await writer.WriteLineAsync("250 OK");
-
                         var message = MimeMessage.Load(new MemoryStream(Encoding.ASCII.GetBytes(data.ToString())));
-                        if (Server != null)
-                        {
                             foreach (string? receiver in recipients)
                             {
-                                if (receiver != null)
+                                if (Server != null && receiver != null)
                                 {
                                     if (MemoryExtensions.Equals(StringProcessing.GetServer(receiver), Name, StringComparison.OrdinalIgnoreCase))
                                     {
@@ -93,8 +100,6 @@ namespace NoIPChat_mail
                                     }
                                 }
                             }
-                        }
-
                     }
                     else if (line.StartsWith("QUIT", StringComparison.OrdinalIgnoreCase))
                     {
@@ -118,7 +123,8 @@ namespace NoIPChat_mail
         }
         public void WriteLog(Exception ex)
         {
-            Console.WriteLine(ex.ToString());
+            //Write to same log as server
+            Server?.WriteLog(ex);
         }
     }
 }

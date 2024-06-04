@@ -5,10 +5,11 @@
     <RootNamespace>NoIPChat_mail</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<SelfContained>true</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MimeKit" Version="4.6.0" />
+	  <PackageReference Include="MimeKit" Version="4.6.0" />
   </ItemGroup>
 
   <ItemGroup>
