@@ -11,12 +11,15 @@ namespace NoIPChat_mail
     {
         private readonly Mail mail;
         private readonly ConcurrentList<Task> tasks = [];
-        internal SMTPServer(Mail mail, IList<(IPAddress, int)> interfaces)
+        internal SMTPServer(Mail mail, IList<Interface> interfaces)
         {
             this.mail = mail;
             foreach (var iface in interfaces)
             {
-                _ = StartAsync(iface.Item1, iface.Item2);
+                if (IPAddress.TryParse(iface.InterfaceIP, out IPAddress? IP) && IP != null)
+                {
+                    _ = StartAsync(IP, iface.Port);
+                }
             }
         }
         private async Task StartAsync(IPAddress IP, int Port)

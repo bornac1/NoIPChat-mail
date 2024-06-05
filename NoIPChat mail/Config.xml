@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Configuratio>
+	<SMTP>
+		<Interface>
+			<InterfaceIP>127.0.0.1</InterfaceIP>
+			<Port>25</Port>
+		</Interface>
+	</SMTP>
+	<POP3>
+		<Interface>
+			<InterfaceIP>127.0.0.1</InterfaceIP>
+			<Port>110</Port>
+		</Interface>
+	</POP3>
+	<Logfile>Mail.log</Logfile>
+</Configuratio>

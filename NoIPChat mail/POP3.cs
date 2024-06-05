@@ -11,13 +11,16 @@ namespace NoIPChat_mail
         private readonly ConcurrentList<Task> tasks = [];
         private readonly DummyDictionary mailstore;
         private static readonly string[] separator = ["\r\n", "\r", "\n"];
-        internal POP3Server(Mail mail, IList<(IPAddress, int)> interfaces)
+        internal POP3Server(Mail mail, IList<Interface> interfaces)
         {
             this.mail = mail;
             mailstore = new(mail.Server);
             foreach (var iface in interfaces)
             {
-                _ = StartAsync(iface.Item1, iface.Item2);
+                if (IPAddress.TryParse(iface.InterfaceIP, out IPAddress? IP) && IP != null)
+                {
+                    _ = StartAsync(IP, iface.Port);
+                }
             }
         }
         private async Task StartAsync(IPAddress IP, int Port)

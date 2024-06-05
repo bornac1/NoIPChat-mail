@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Net;
+﻿using System.Xml.Serialization;
 using Messages;
 using Server_base;
 
@@ -11,23 +10,38 @@ namespace NoIPChat_mail
         private SMTPServer? SMTP;
         private POP3Server? POP3;
         internal bool active = true;
-        private readonly ImmutableList<(IPAddress, int)> SMTPinterfaces = [];
-        private readonly ImmutableList<(IPAddress, int)> POP3interfaces = [];
+        private string logfile = "Mail.log";
         public void Initialize()
         {
             if (Server != null)
             {
-                //Just example that listens on all IPs
-                SMTPinterfaces.Add((IPAddress.Any, 25));
-                POP3interfaces.Add((IPAddress.Any, 110));
-                SMTP = new SMTPServer(this, SMTPinterfaces);
-                POP3 = new POP3Server(this, POP3interfaces);
+                using TextReader reader = new StreamReader("Config.xml");
+                XmlSerializer serializer = new(typeof(Configuration));
+                Configuration? config = (Configuration?)serializer.Deserialize(reader);
+                if (config != null)
+                {
+                    SMTP = new SMTPServer(this, config.SMTP);
+                    POP3 = new POP3Server(this, config.POP3);
+                    if (!string.IsNullOrEmpty(config.Logfile))
+                    {
+                        logfile = config.Logfile;
+                    }
+                }
             }
         }
         public void WriteLog(Exception ex)
         {
-            //Write to the same log as Server
-            Server?.WriteLog(ex);
+            string log = DateTime.Now.ToString("d.M.yyyy. H:m:s") + " " + ex.ToString() + Environment.NewLine;
+            try
+            {
+                System.IO.File.AppendAllText(logfile, log);
+            }
+            catch (Exception ex1)
+            {
+                Console.WriteLine($"Plugin NoIPChat mail can't save log to file {logfile}.");
+                Console.WriteLine(log);
+                Console.WriteLine(ex1.ToString());
+            }
         }
         public void Close()
         {
