@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<Configuratio>
+<Configuration>
 	<SMTP>
 		<Interface>
 			<InterfaceIP>127.0.0.1</InterfaceIP>
@@ -13,4 +13,4 @@
 		</Interface>
 	</POP3>
 	<Logfile>Mail.log</Logfile>
-</Configuratio>
+</Configuration>
